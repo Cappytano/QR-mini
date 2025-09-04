@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>QR-Reader (7.0.2)</title>
+  <title>QR Logger — v6.0.0 (Remote camera + all features)</title>
   <meta name="theme-color" content="#0f172a"/>
   <meta name="color-scheme" content="dark light"/>
   <link rel="manifest" href="manifest.webmanifest"/>
@@ -23,33 +23,29 @@
     .frame{position:absolute;inset:0;border:2px dashed rgba(255,255,255,.25);border-radius:12px;pointer-events:none}
     .controls{display:flex;gap:8px;flex-wrap:wrap}.controls>*{flex:1 1 auto}
     button,select,input,textarea{background:#0b1220;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px}
-    button{cursor:pointer}button.primary{background:linear-gradient(180deg,#1f7a3b,#14532d);border-color:#134e4a}button.secondary{background:linear-gradient(180deg,#0b2a64,#0b1f3a);border-color:#0b1f3a}
-    .status{font-size:12px;color:var(--muted);margin-top:8px;min-height:18px}.muted{color:var(--muted);font-size:12px}
+    button{cursor:pointer}
+    button.primary{background:linear-gradient(180deg,#1f7a3b,#14532d);border-color:#134e4a}
+    button.secondary{background:linear-gradient(180deg,#0b2a64,#0b1f3a);border-color:#0b1f3a}
+    .status{font-size:12px;color:var(--muted);margin-top:8px;min-height:18px}
+    .muted{color:var(--muted);font-size:12px}
     .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;background:#0b2a64;border:1px solid #0b1f3a;color:#cfe1ff}
     .banner{margin:12px 0;padding:10px 12px;border-radius:12px;border:1px solid #43320b;background:linear-gradient(180deg,rgba(255,170,0,.12),rgba(255,170,0,.06));color:#ffdd9a}
     table{width:100%;border-collapse:collapse}thead th{position:sticky;top:0;background:#0e172a;border-bottom:1px solid var(--border);font-size:12px;letter-spacing:.06em;color:#93a3b8;padding:10px 8px;text-align:left}
     tbody td{border-bottom:1px solid var(--border);padding:8px;vertical-align:top;font-size:14px}
-    .note-cell[contenteditable="true"]{outline:1px dashed rgba(255,255,255,.15)}.count{display:inline-flex;gap:6px;background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.25);border-radius:8px;padding:2px 8px;font-size:12px}
+    .note-cell[contenteditable=\"true\"]{outline:1px dashed rgba(255,255,255,.15)}.count{display:inline-flex;gap:6px;background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,.25);border-radius:8px;padding:2px 8px;font-size:12px}
     .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,1px,1px);white-space:nowrap;border:0}
     .thumb{width:64px;height:auto;border-radius:6px;border:1px solid var(--border)}
     .small{padding:6px 9px;font-size:12px}
-    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row label{font-size:12px;color:var(--muted)}.row .tight{max-width:180px}
   </style>
-  <!-- Local vendor files (commit these under /vendor) -->
-  <script src="vendor/zxing.min.js"></script>
-  <script src="vendor/zxing-browser.min.js"></script>
-  <script src="vendor/jsQR.js"></script>
-  <script src="vendor/tesseract.min.js"></script>
-  <script src="vendor/xlsx.full.min.js"></script>
 </head>
 <body>
   <header>
     <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
       <div>
-        <h1>QR-Reader</h1>
-        <div class="subtitle">Full: multi‑engine scan, delayed scale weight & photo (OCR/WebHID/WebBLE), CSV/XLSX/ZIP, CSV+XLSX import, remote camera, phone→PC (Serial)</div>
+        <h1>QR Logger</h1>
+        <div class="subtitle">v6.0.0 — Remote camera (pair code/WebRTC) + all features</div>
       </div>
-      <div style="display:flex;gap:8px;min-width:420px">
+      <div style="display:flex;gap:8px;min-width:320px">
         <button id="installBtn" type="button" class="secondary" style="display:none">Install App</button>
       </div>
     </div>
@@ -62,41 +58,37 @@
       <section class="card"><div class="content">
         <h2 style="margin:0 0 10px 0">Scanner</h2>
 
-        <div class="controls row" style="margin-bottom:8px">
+        <div class="controls" style="margin-bottom:8px">
           <label class="sr-only" for="cameraSource">Camera source</label>
-          <select id="cameraSource" title="Camera source" class="tight">
+          <select id="cameraSource" title="Camera source">
             <option value="local" selected>Local camera</option>
-            <option value="remote">Remote camera (WebRTC)</option>
-            <option value="serial">Phone via Serial/Bluetooth</option>
+            <option value="remote">Remote camera (pair code)</option>
           </select>
-          <button id="remoteHostBtn" type="button" class="secondary">Create Session</button>
-          <input id="remoteCodeInput" class="tight" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Enter code to join" title="Pairing code"/>
-          <button id="remoteJoinBtn" type="button" class="secondary">Join</button>
-        </div>
 
-        <div class="controls row" style="margin-bottom:8px">
-          <button id="connectSerial" type="button" class="secondary" title="Connect phone via Bluetooth/Serial (Windows COM port)">Connect Phone (Serial)</button>
-          <span id="serialState" class="muted"></span>
+          <!-- Remote controls -->
+          <button id="remoteHostBtn" type="button" class="secondary" title="Create a new session as Host">Create Session</button>
+          <input id="remoteCodeInput" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Enter code to join" title="Pairing code"/>
+          <button id="remoteJoinBtn" type="button" class="secondary">Join</button>
         </div>
 
         <div class="video-wrap">
           <video id="video" playsinline webkit-playsinline muted></video>
+          <canvas id="canvas" style="display:none"></canvas>
           <canvas id="overlay" style="position:absolute;inset:0;pointer-events:none"></canvas>
           <div class="frame" aria-hidden="true"></div>
         </div>
 
-        <div class="controls row" style="margin-top:12px">
+        <div class="controls" style="margin-top:12px">
           <button id="permBtn" type="button" class="secondary">Request Permission</button>
           <button id="startBtn" type="button" class="primary">Start Camera</button>
           <button id="stopBtn" type="button" class="secondary">Stop</button>
         </div>
-
-        <div class="controls row" style="margin-top:8px">
+        <div class="controls" style="margin-top:8px">
           <label class="sr-only" for="cameraSelect">Camera</label>
-          <select id="cameraSelect" title="Camera" aria-label="Camera device list" class="tight"></select>
-          <button id="refreshBtn" type="button" class="secondary" title="Refresh">Refresh</button>
+          <select id="cameraSelect" title="Camera" aria-label="Camera device list"></select>
+          <button id="refreshBtn" type="button" class="secondary" title="Refresh camera list">Refresh Cameras</button>
           <label class="sr-only" for="prefFacing">Preferred camera</label>
-          <select id="prefFacing" title="Preferred camera" aria-label="Preferred camera" class="tight">
+          <select id="prefFacing" title="Preferred camera" aria-label="Preferred camera">
             <option value="environment">Prefer Back</option>
             <option value="user">Prefer Front</option>
             <option value="auto" selected>Auto</option>
@@ -104,31 +96,25 @@
           <span id="scanEngine" class="pill" aria-live="polite">Engine: Detecting…</span>
         </div>
 
-        <div class="controls row" style="margin-top:8px">
+        <div class="controls" style="margin-top:8px">
+          <label class="sr-only" for="manualInput">Manual QR entry</label>
+          <input id="manualInput" type="text" placeholder="Manual or keyboard scanner input (press Enter)"/>
+          <button id="addManualBtn" type="button">Add</button>
+        </div>
+
+        <div class="controls" style="margin-top:8px">
           <label class="sr-only" for="scaleMode">Scale source</label>
-          <select id="scaleMode" title="Scale source" class="tight">
+          <select id="scaleMode" title="Scale source">
             <option value="none" selected>No scale</option>
             <option value="ocr">OCR from camera</option>
             <option value="hid">USB/HID scale</option>
             <option value="ble">Bluetooth scale</option>
           </select>
           <label class="sr-only" for="delaySec">Scale delay seconds</label>
-          <input id="delaySec" type="number" min="0" max="4" step="0.1" value="2" title="Delay (seconds)" class="tight"/>
+          <input id="delaySec" type="number" min="0" max="4" step="0.1" value="2" title="Delay (seconds)"/>
           <button id="connectHID" type="button" class="secondary">Connect USB/HID</button>
           <button id="connectBLE" type="button" class="secondary">Connect BLE</button>
           <button id="ocrToggle" type="button" class="secondary">Toggle OCR Box</button>
-        </div>
-
-        <div class="controls row" style="margin-top:8px">
-          <label for="cooldownSec">Post‑scan pause (s)</label>
-          <input id="cooldownSec" class="tight" type="number" min="0" max="10" step="0.5" value="5"/>
-          <label><input id="ignoreDup" type="checkbox" checked/> Ignore duplicates during pause</label>
-        </div>
-
-        <div class="controls row" style="margin-top:8px">
-          <label class="sr-only" for="manualInput">Manual entry</label>
-          <input id="manualInput" type="text" placeholder="Manual or keyboard scanner input (press Enter)"/>
-          <button id="addManualBtn" type="button">Add</button>
         </div>
 
         <div id="status" class="status" role="status" aria-live="polite"></div>
@@ -142,7 +128,7 @@
           <button id="exportXlsx" type="button" class="primary">Export Excel (.xlsx)</button>
           <button id="exportCsv" type="button" class="secondary">Export CSV</button>
           <button id="exportZip" type="button" class="secondary">Export ZIP (CSV+Photos)</button>
-          <button id="importFileBtn" type="button" class="secondary" aria-controls="fileInput">Import (CSV+XLSX)</button>
+          <button id="importFileBtn" type="button" class="secondary" aria-controls="fileInput">Import</button>
           <label for="fileInput" class="sr-only">Choose file to import</label>
           <input id="fileInput" type="file" accept=".csv, .xlsx, .xls" title="Choose file" aria-label="Choose file" style="display:none"/>
           <button id="clearBtn" type="button" class="secondary" title="Clear all rows">Clear</button>
@@ -150,7 +136,7 @@
         <div class="card" style="max-height:55vh;overflow:auto">
           <table id="logTable">
             <thead><tr>
-              <th>#</th><th>Content</th><th>Format</th><th>Source</th><th>Date</th><th>Time</th><th>Weight</th><th>Photo</th><th>Count</th><th>Notes</th><th>Actions</th>
+              <th>#</th><th>QR Content</th><th>Format</th><th>Source</th><th>Date</th><th>Time</th><th>Weight</th><th>Photo</th><th>Count</th><th>Notes (editable)</th><th>Actions</th>
             </tr></thead>
             <tbody id="logBody"></tbody>
           </table>
@@ -159,7 +145,14 @@
     </div>
   </main>
 
+  <!-- Libs -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
+
+  <!-- Core app -->
   <script src="app.js"></script>
+  <!-- Remote camera (module) -->
   <script type="module" src="remote.js"></script>
 </body>
 </html>

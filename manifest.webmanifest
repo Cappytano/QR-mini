@@ -1,6 +1,6 @@
 {
-  "name": "QR-Reader",
-  "short_name": "QR-Reader",
+  "name": "QR Logger",
+  "short_name": "QR Logger",
   "theme_color": "#0f172a",
   "background_color": "#0b1220",
   "display": "standalone",
