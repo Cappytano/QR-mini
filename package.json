@@ -1,7 +1,8 @@
 {
-  "name": "qr-reader-mini",
-  "version": "1.0.0",
+  "name": "qr-logger",
+  "version": "6.0.0",
   "private": true,
+  "description": "QR Logger (PWA) with Remote Camera (WebRTC), delayed weight capture + photo",
   "scripts": {
     "start": "node server.js"
   },
