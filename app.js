@@ -1,3 +1,66 @@
+
+// --- Added: robust snapshot + DOM photo updater + export helpers (v6.0.2-p3) ---
+function capturePhotoFromVideo(videoEl, quality) {
+  try {
+    if (!videoEl) return null;
+    var w = videoEl.videoWidth || videoEl.clientWidth || 0;
+    var h = videoEl.videoHeight || videoEl.clientHeight || 0;
+    if (!w || !h) return null;
+    var c = capturePhotoFromVideo._c || (capturePhotoFromVideo._c = document.createElement('canvas'));
+    c.width = w; c.height = h;
+    var ctx = c.getContext('2d');
+    ctx.drawImage(videoEl, 0, 0, w, h);
+    var q = (typeof quality === 'number') ? quality : 0.85;
+    return c.toDataURL('image/jpeg', q);
+  } catch (e) {
+    console.error('capturePhotoFromVideo failed:', e);
+    return null;
+  }
+}
+
+function updateRowPhotoCell(row) {
+  try {
+    var tr = document.querySelector('tr[data-id="'+ row.id +'"]');
+    if (!tr) return;
+    var td = tr.querySelector('td.col-photo');
+    if (!td) return;
+    var img = td.querySelector('img');
+    if (!img) {
+      img = document.createElement('img');
+      img.alt = 'photo'; img.loading = 'lazy';
+      img.style.maxWidth = '72px'; img.style.maxHeight = '72px';
+      td.innerHTML = '';
+      td.appendChild(img);
+    }
+    img.src = row.photo;
+  } catch (e) { console.warn('updateRowPhotoCell failed', e); }
+}
+
+function downloadBlob(blob, filename) {
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 0);
+}
+
+function safeCell(v) {
+  if (v == null) return '';
+  if (typeof v === 'string') {
+    if (v.slice(0,11) === 'data:image') return '[photo omitted]';
+    v = v.replace(/<[^>]+>/g, '');
+    if (v.length > 32760) v = v.slice(0,32760);
+    return v;
+  }
+  if (typeof v === 'number') return v;
+  try {
+    var s = JSON.stringify(v);
+    if (s.length > 32760) s = s.slice(0,32760);
+    return s;
+  } catch (e) { return String(v).slice(0,32760); }
+}
+
 // Core app for QR Logger (v6.0.2) — Cooldown, duplicate guard, enhanced decoder
 (async function(){
   await (window.libsReady || Promise.resolve());
@@ -404,6 +467,7 @@
         if(window.scaleModeGlobal==='ocr'){ weight = await captureOCRWeight(); }
         else if(window.scaleModeGlobal==='hid' || window.scaleModeGlobal==='ble'){ weight = window.lastKnownWeightGlobal || ''; }
         row.weight = weight; row.photo = await capturePhoto();
+    updateRowPhotoCell(row);
         var list=JSON.parse(localStorage.getItem('qrLoggerV1')||'[]'); for(var k=0;k<list.length;k++){ if(list[k].id===id){ list[k]=row; break; } }
         localStorage.setItem('qrLoggerV1', JSON.stringify(list));
         setStatus('Captured delayed weight/photo.');
@@ -428,3 +492,33 @@
   window.connectHID = connectHID;
   window.connectBLE = connectBLE;
 })();
+function exportXlsx() {
+  if (typeof XLSX === 'undefined') { toast && toast('XLSX library not loaded'); return; }
+  try {
+    var headers = ['Content','Format','Source','Date','Time','Weight (g)','Photo Name','Count','Notes','Timestamp'];
+    var data = (window.rows || []).map(function(r){
+      var photoName = r && r.photo ? ('photo_'+ ((r.ts||Date.now())) + '.jpg') : '';
+      return [
+        safeCell(r && r.content),
+        safeCell(r && r.format),
+        safeCell(r && r.source),
+        safeCell(r && r.date),
+        safeCell(r && r.time),
+        (typeof (r && r.weight) === 'number') ? r.weight : safeCell(r && r.weight),
+        photoName,
+        (r && r.count) || 1,
+        safeCell(r && r.notes),
+        r && r.ts || ''
+      ];
+    });
+    var ws = XLSX.utils.aoa_to_sheet([headers].concat(data));
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Log');
+    var wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    var blob = new Blob([wbout], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    downloadBlob(blob, 'qr-log.xlsx');
+  } catch (e) {
+    console.error('exportXlsx failed:', e);
+    toast && toast('Export XLSX failed: ' + (e && e.message));
+  }
+}
