@@ -1,0 +1,16 @@
+*{box-sizing:border-box}html,body{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial,sans-serif;background:#0f172a;color:#e5e7eb}
+header{position:sticky;top:0;background:rgba(15,23,42,.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:.75rem 1rem;border-bottom:1px solid #334155}
+h1{margin:0;font-size:1.1rem} h1 small{opacity:.7;font-weight:400}
+.pills{margin-top:.5rem;display:flex;gap:.5rem;flex-wrap:wrap}
+.pill{display:inline-block;padding:.2rem .5rem;border-radius:999px;background:#1f2937;border:1px solid #374151;font-size:.8rem}
+main{padding:1rem;display:grid;gap:1rem}
+.controls{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+button,select{background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:.4rem;padding:.5rem .75rem}
+button:hover,select:hover{border-color:#4b5563}
+.preview{display:grid;justify-items:start}
+video{max-width:100%;width:640px;height:auto;background:#111827;border:1px solid #374151;border-radius:.5rem}
+.hidden{display:none}
+table{width:100%;border-collapse:collapse;background:#111827;border:1px solid #374151;border-radius:.5rem;overflow:hidden}
+th,td{padding:.5rem;border-bottom:1px solid #334155;vertical-align:top}
+th{background:#0b1220;text-align:left}
+td img{max-width:120px;border:1px solid #334155;border-radius:.25rem}
