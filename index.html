@@ -48,8 +48,8 @@
     const sources = {
       jszip: ['https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js','https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js','https://unpkg.com/jszip@3.10.1/dist/jszip.min.js'],
       jsqr:  ['https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js','https://unpkg.com/jsqr@1.4.0/dist/jsQR.js'],
-      xlsx:  ['https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js','https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.19.3/xlsx.full.min.js','https://unpkg.com/xlsx@0.19.3/dist/xlsx.full.min.js'],
-      qrscanner: ['https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.min.js','https://unpkg.com/qr-scanner@1.4.2/qr-scanner.min.js']
+      xlsx: ['https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js', 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js', 'https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js', 'https://unpkg.com/xlsx/dist/xlsx.full.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'],
+      qrscanner: ['https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js', 'https://unpkg.com/qr-scanner@1.4.2/qr-scanner.umd.min.js']
     };
     const r = {};
     r.jszip = await tryMany(sources.jszip);
@@ -58,9 +58,8 @@
     r.qrscanner = await tryMany(sources.qrscanner);
     if (window.QrScanner && r.qrscanner){
       // set worker path matching the origin we loaded from
-      var base = r.qrscanner.replace(/qr-scanner\.min\.js.*$/,'');
-      window.QrScanner.WORKER_PATH = base + 'qr-scanner-worker.min.js';
-    }
+      var base = r.qrscanner.replace(/qr-scanner(\.umd)?\.min\.js.*$/,'');
+}
     window.__libs = r;
     return r;
   })();
